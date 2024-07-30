@@ -1,4 +1,5 @@
 # Palette: Image-to-Image Diffusion Models
+Note: This is forked from https://github.com/Janspiry/Palette-Image-to-Image-Diffusion-Models, and so everything below this README.md (and every pieces of code at the start of this fork) are from the original repo. This fork is mainly to serve for the purposes of understanding & experimenting with diffusion models and also to avoid the potential pain of accidentally pushing to the original owners' repo..... 
 
 [Paper](https://arxiv.org/pdf/2111.05826.pdf ) |  [Project](https://iterative-refinement.github.io/palette/ )
 
