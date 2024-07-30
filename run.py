@@ -74,7 +74,6 @@ if __name__ == '__main__':
     ''' parser configs '''
     args = parser.parse_args()
     opt = Praser.parse(args)
-    
     ''' cuda devices '''
     gpu_str = ','.join(str(x) for x in opt['gpu_ids'])
     os.environ['CUDA_VISIBLE_DEVICES'] = gpu_str
