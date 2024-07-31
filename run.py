@@ -71,6 +71,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--debug', action='store_true')
     parser.add_argument('-P', '--port', default='21012', type=str)
 
+
     ''' parser configs '''
     args = parser.parse_args()
     opt = Parser.parse(args)
@@ -89,3 +90,4 @@ if __name__ == '__main__':
     else:
         opt['world_size'] = 1 
         main_worker(0, 1, opt)
+        

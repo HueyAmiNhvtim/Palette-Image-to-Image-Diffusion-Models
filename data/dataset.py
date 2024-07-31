@@ -22,7 +22,9 @@ def make_dataset(data_path):
     Returns:
         list[np.ndarray]: A list of relative paths to images 
     """
-    if os.path.isfile(data_path):
+    # Maybe make the flist here if possible.
+    print(f"[INFO] data_path: {data_path}") 
+    if os.path.isfile(data_path):   
         images = [i for i in np.genfromtxt(data_path, dtype=np.str, encoding='utf-8')]
     else:
         images = []   

@@ -7,10 +7,13 @@ from torch.utils.data import DataLoader, Subset
 
 import core.util as Util
 from core.parser import init_obj
-
+# [TODO] Understand what validation_split is. 
+# [TODO] Automatically generate a flist file if not existed and not a directory. You may have to create a train-test-split thing.
+ 
 
 def define_dataloader(logger, opt):
-    """ create train/test dataloader and validation dataloader,  validation dataloader is None when phase is test or not GPU 0 """
+    """ Create train/test dataloader and validation dataloader,  
+        Validation dataloader is None when phase is test or not GPU 0 """
     '''create dataset and set random seed'''
     dataloader_args = opt['datasets'][opt['phase']]['dataloader']['args']
     worker_init_fn = partial(Util.set_seed, gl_seed=opt['seed'])
@@ -42,34 +45,35 @@ def define_dataset(logger, opt):
 
     valid_len = 0
     data_len = len(phase_dataset)
-    if 'debug' in opt['name']:
+    if 'debug' in opt['name']:  
         debug_split = opt['debug'].get('debug_split', 1.0)
         if isinstance(debug_split, int):
             data_len = debug_split
         else:
             data_len *= debug_split
 
-    dataloder_opt = opt['datasets'][opt['phase']]['dataloader']
-    valid_split = dataloder_opt.get('validation_split', 0)    
+    dataloader_opt = opt['datasets'][opt['phase']]['dataloader']
+    valid_split = dataloader_opt.get('validation_split', 0)    
     
     ''' divide validation dataset, valid_split==0 when phase is test or validation_split is 0. '''
     if valid_split > 0.0 or 'debug' in opt['name']: 
         if isinstance(valid_split, int):
             assert valid_split < data_len, "Validation set size is configured to be larger than entire dataset."
             valid_len = valid_split
-        else:
+        else:   
             valid_len = int(data_len * valid_split)
         data_len -= valid_len
         phase_dataset, val_dataset = subset_split(dataset=phase_dataset, lengths=[data_len, valid_len], generator=Generator().manual_seed(opt['seed']))
     
-    logger.info('Dataset for {} have {} samples.'.format(opt['phase'], data_len))
+    logger.info(f"Dataset for {opt['phase']} have {data_len} samples.")
     if opt['phase'] == 'train':
-        logger.info('Dataset for {} have {} samples.'.format('val', valid_len))   
+        logger.info(f"Dataset for {'val'} have {valid_len} samples.")   
     return phase_dataset, val_dataset
 
 def subset_split(dataset, lengths, generator):
     """
-    split a dataset into non-overlapping new datasets of given lengths. main code is from random_split function in pytorch
+    Split a dataset into non-overlapping new datasets of given lengths. 
+    Main code is from random_split function in pytorch.
     """
     indices = randperm(sum(lengths), generator=generator).tolist()
     Subsets = []
