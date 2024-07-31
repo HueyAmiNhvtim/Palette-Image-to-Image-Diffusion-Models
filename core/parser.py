@@ -45,7 +45,7 @@ def init_obj(opt, logger, *args, default_file_name='default file', given_module=
         if isinstance(attr, type): 
             ret = attr(*args, **kwargs)  # Initialize an instance of the class if we detect that attr is an user-defined class
             ret.__name__  = ret.__class__.__name__
-        elif isinstance(attr, FunctionType): # For dynamically creating a function....wat.
+        elif isinstance(attr, FunctionType): # For dynamically creating a function....wat. Any user-defined function is of type FunctionType.
             ret = partial(attr, *args, **kwargs)
             ret.__name__  = attr.__name__
             # ret = attr
@@ -76,7 +76,10 @@ class NoneDict(dict):
         return None
 
 def dict_to_nonedict(opt):
-    """ convert to NoneDict, which return None for missing key. """
+    """ 
+    Convert an existing dictionary or list opt into a NoneDict, 
+    which returns None for missing key(s). 
+    """
     if isinstance(opt, dict):
         new_opt = dict()
         for key, sub_opt in opt.items():

@@ -5,8 +5,7 @@
     "finetune_norm": false, 
 
     "path": { 
-        "base_dir": "experiments"
-        , 
+        "base_dir": "experiments", 
         "code": "code", 
         "tb_logger": "tb_logger", 
         "results": "results",

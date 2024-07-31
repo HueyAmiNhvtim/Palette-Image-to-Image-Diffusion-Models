@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
 
     ''' parser configs '''
-    args = parser.parse_args()
+    args = parser.parse_args()  
     opt = Parser.parse(args)
     ''' cuda devices '''
     gpu_str = ','.join(str(x) for x in opt['gpu_ids'])
@@ -81,7 +81,7 @@ if __name__ == '__main__':
     print('export CUDA_VISIBLE_DEVICES={}'.format(gpu_str))
 
     ''' use DistributedDataParallel(DDP) and multiprocessing for multi-gpu training'''
-    # [TODO]: multi GPU on multi machine
+    # [TODO]: multi GPU on multi machine. I probably can't do this tbh....
     if opt['distributed']:
         ngpus_per_node = len(opt['gpu_ids']) # or torch.cuda.device_count()
         opt['world_size'] = ngpus_per_node
@@ -90,4 +90,3 @@ if __name__ == '__main__':
     else:
         opt['world_size'] = 1 
         main_worker(0, 1, opt)
-        
