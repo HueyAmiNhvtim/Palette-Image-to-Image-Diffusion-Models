@@ -132,3 +132,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Raw data folder
+datasets/
+
+# Checkpoint folder
+chk_points/
+
+# Original configs. Because they have comments, and JSON doesn't allow them. Use the original to read the comments!
+config/original_configs
