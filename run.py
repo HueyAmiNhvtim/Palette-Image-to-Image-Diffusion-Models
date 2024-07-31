@@ -5,7 +5,7 @@ import torch
 import torch.multiprocessing as mp
 
 from core.logger import VisualWriter, InfoLogger
-import core.praser as Praser
+import core.parser as Parser
 import core.util as Util
 from data import define_dataloader
 from models import create_model, define_network, define_loss, define_metric
@@ -73,14 +73,14 @@ if __name__ == '__main__':
 
     ''' parser configs '''
     args = parser.parse_args()
-    opt = Praser.parse(args)
+    opt = Parser.parse(args)
     ''' cuda devices '''
     gpu_str = ','.join(str(x) for x in opt['gpu_ids'])
     os.environ['CUDA_VISIBLE_DEVICES'] = gpu_str
     print('export CUDA_VISIBLE_DEVICES={}'.format(gpu_str))
 
     ''' use DistributedDataParallel(DDP) and multiprocessing for multi-gpu training'''
-    # [Todo]: multi GPU on multi machine
+    # [TODO]: multi GPU on multi machine
     if opt['distributed']:
         ngpus_per_node = len(opt['gpu_ids']) # or torch.cuda.device_count()
         opt['world_size'] = ngpus_per_node

@@ -1,4 +1,4 @@
-from core.praser import init_obj
+from core.parser import init_obj
 
 def create_model(**cfg_model):
     """ create_model """

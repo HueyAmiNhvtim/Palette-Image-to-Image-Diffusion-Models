@@ -12,21 +12,26 @@ IMG_EXTENSIONS = [
     '.png', '.PNG', '.ppm', '.PPM', '.bmp', '.BMP',
 ]
 
-def is_image_file(filename):
+def is_image_file(filename: str):
     return any(filename.endswith(extension) for extension in IMG_EXTENSIONS)
 
-def make_dataset(dir):
-    if os.path.isfile(dir):
-        images = [i for i in np.genfromtxt(dir, dtype=np.str, encoding='utf-8')]
+def make_dataset(data_path):
+    """Generate a list of numpy ndarrays of relative paths of the images
+    Args:
+        data_path (str): path to the file containing paths of images or path to the folder containing images
+    Returns:
+        list[np.ndarray]: A list of relative paths to images 
+    """
+    if os.path.isfile(data_path):
+        images = [i for i in np.genfromtxt(data_path, dtype=np.str, encoding='utf-8')]
     else:
-        images = []
-        assert os.path.isdir(dir), '%s is not a valid directory' % dir
-        for root, _, fnames in sorted(os.walk(dir)):
+        images = []   
+        assert os.path.isdir(data_path), '%s is not a valid directory' % data_path
+        for root, _, fnames in sorted(os.walk(data_path)):
             for fname in sorted(fnames):
                 if is_image_file(fname):
                     path = os.path.join(root, fname)
                     images.append(path)
-
     return images
 
 def pil_loader(path):

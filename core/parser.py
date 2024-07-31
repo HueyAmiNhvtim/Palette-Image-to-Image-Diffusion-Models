@@ -11,7 +11,7 @@ import shutil
 
 def init_obj(opt, logger, *args, default_file_name='default file', given_module=None, init_type='Network', **modify_kwargs):
     """
-    finds a function handle with the name given as 'name' in config,
+    Finds a function handle with the name given as 'name' in config,
     and returns the instance initialized with corresponding args.
     """ 
     if opt is None or len(opt)<1:
@@ -34,15 +34,18 @@ def init_obj(opt, logger, *args, default_file_name='default file', given_module=
             module = given_module
         else:
             module = importlib.import_module(file_name)
-        
-        attr = getattr(module, class_name)
+        print(f"[INFO] Module: {module} class_name: {class_name}")
+        attr = getattr(module, class_name)  # Get the class object out of classname in module!
+        print(f"[INFO] Object of class {class_name}: {attr}")
         kwargs = opt.get('args', {})
         kwargs.update(modify_kwargs)
+        
         ''' import class or function with args '''
+        print(f"[INFO] isinstance of {class_name}: {type(attr)}") # A user-defined class (or the class "object") is an instance of the class "type".
         if isinstance(attr, type): 
-            ret = attr(*args, **kwargs)
+            ret = attr(*args, **kwargs)  # Initialize an instance of the class if we detect that attr is an user-defined class
             ret.__name__  = ret.__class__.__name__
-        elif isinstance(attr, FunctionType): 
+        elif isinstance(attr, FunctionType): # For dynamically creating a function....wat.
             ret = partial(attr, *args, **kwargs)
             ret.__name__  = attr.__name__
             # ret = attr
@@ -126,6 +129,7 @@ def parse(args):
         opt['name'] = '{}_{}'.format(opt['phase'], opt['name'])
 
     ''' set log directory '''
+    
     experiments_root = os.path.join(opt['path']['base_dir'], '{}_{}'.format(opt['name'], get_timestamp()))
     mkdirs(experiments_root)
 

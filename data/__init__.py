@@ -6,7 +6,7 @@ from torch import Generator, randperm
 from torch.utils.data import DataLoader, Subset
 
 import core.util as Util
-from core.praser import init_obj
+from core.parser import init_obj
 
 
 def define_dataloader(logger, opt):
