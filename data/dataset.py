@@ -5,6 +5,7 @@ import os
 import torch
 import numpy as np
 
+from pathlib import Path
 from .util.mask import (bbox2mask, brush_stroke_mask, get_irregular_mask, random_bbox, random_cropping_bbox)
 
 IMG_EXTENSIONS = [
@@ -25,7 +26,7 @@ def make_dataset(data_path):
     # Maybe make the flist here if possible.
     print(f"[INFO] data_path: {data_path}") 
     if os.path.isfile(data_path):   
-        images = [i for i in np.genfromtxt(data_path, dtype=np.str, encoding='utf-8')]
+        images = [i for i in np.genfromtxt(data_path, dtype=str, encoding='utf-8')]
     else:
         images = []   
         assert os.path.isdir(data_path), '%s is not a valid directory' % data_path

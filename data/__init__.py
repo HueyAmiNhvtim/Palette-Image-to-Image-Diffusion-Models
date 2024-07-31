@@ -15,6 +15,8 @@ def define_dataloader(logger, opt):
     """ Create train/test dataloader and validation dataloader,  
         Validation dataloader is None when phase is test or not GPU 0 """
     '''create dataset and set random seed'''
+    # Grab the appropriate parameter values for the dataloaders
+
     dataloader_args = opt['datasets'][opt['phase']]['dataloader']['args']
     worker_init_fn = partial(Util.set_seed, gl_seed=opt['seed'])
 
@@ -39,7 +41,7 @@ def define_dataloader(logger, opt):
 
 def define_dataset(logger, opt):
     ''' loading Dataset() class from given file's name '''
-    dataset_opt = opt['datasets'][opt['phase']]['which_dataset']
+    dataset_opt = opt['datasets'][opt['phase']]['which_dataset']  # Get the approriate dataset parameters given the phase (train or test)
     phase_dataset = init_obj(dataset_opt, logger, default_file_name='data.dataset', init_type='Dataset')
     val_dataset = None
 
@@ -53,9 +55,9 @@ def define_dataset(logger, opt):
             data_len *= debug_split
 
     dataloader_opt = opt['datasets'][opt['phase']]['dataloader']
-    valid_split = dataloader_opt.get('validation_split', 0)    
+    valid_split = dataloader_opt.get('validation_split', 0)  # [TODO] Understand why validation_split is here....  
     
-    ''' divide validation dataset, valid_split==0 when phase is test or validation_split is 0. '''
+    ''' divide validation dataset, valid_split==0 when phase is test or validation_split is itself 0 when extracted out of dict '''
     if valid_split > 0.0 or 'debug' in opt['name']: 
         if isinstance(valid_split, int):
             assert valid_split < data_len, "Validation set size is configured to be larger than entire dataset."

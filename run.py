@@ -89,4 +89,4 @@ if __name__ == '__main__':
         mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, opt))
     else:
         opt['world_size'] = 1 
-        main_worker(0, 1, opt)
+        main_worker(gpu=0, ngpus_per_node=1, opt=opt)  

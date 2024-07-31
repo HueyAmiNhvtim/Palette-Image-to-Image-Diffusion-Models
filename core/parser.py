@@ -6,6 +6,7 @@ from datetime import datetime
 from functools import partial
 import importlib
 from types  import FunctionType
+from sklearn.model_selection import train_test_split
 import shutil
 
 
@@ -14,6 +15,7 @@ def init_obj(opt, logger, *args, default_file_name='default file', given_module=
     Finds a function handle with the name given as 'name' in config,
     and returns the instance initialized with corresponding args.
     """ 
+    
     if opt is None or len(opt)<1:
         logger.info('Option is None when initialize {}'.format(init_type))
         return None
@@ -32,6 +34,7 @@ def init_obj(opt, logger, *args, default_file_name='default file', given_module=
     try:
         if given_module is not None:
             module = given_module
+            
         else:
             module = importlib.import_module(file_name)
         print(f"[INFO] Module: {module} class_name: {class_name}")
@@ -44,7 +47,9 @@ def init_obj(opt, logger, *args, default_file_name='default file', given_module=
         print(f"[INFO] isinstance of {class_name}: {type(attr)}") # A user-defined class (or the class "object") is an instance of the class "type".
         if isinstance(attr, type): 
             ret = attr(*args, **kwargs)  # Initialize an instance of the class if we detect that attr is an user-defined class
+            # print(f"[INFO] ret.__name__")
             ret.__name__  = ret.__class__.__name__
+            # print(f"[INFO] ret.__name__")
         elif isinstance(attr, FunctionType): # For dynamically creating a function....wat. Any user-defined function is of type FunctionType.
             ret = partial(attr, *args, **kwargs)
             ret.__name__  = attr.__name__
@@ -103,13 +108,19 @@ def dict2str(opt, indent_l=1):
     return msg
 
 def parse(args):
+    """Parse the JSON file in one of the arguments used for the CLI command
+    Args:
+        args (argparse.Namespace): object containing the arguments used in the CLI command
+
+    Returns:
+        NoneDict: A NoneDict version of the parsed JSON file
+    """
     json_str = ''
     with open(args.config, 'r') as f:
         for line in f:
             line = line.split('//')[0] + '\n'
             json_str += line
     opt = json.loads(json_str, object_pairs_hook=OrderedDict)
-
     ''' replace the config context using args '''
     opt['phase'] = args.phase
     if args.gpu_ids is not None:
@@ -130,15 +141,28 @@ def parse(args):
         opt['name'] = 'finetune_{}'.format(opt['name'])
     else:
         opt['name'] = '{}_{}'.format(opt['phase'], opt['name'])
+    
+    # Check if the flist of the appropriate phase exists. If not, then create a new one.
+    flist_exist = []
+    flist_paths = []
+    for phase in opt["datasets"]:  # Only works with train and test
+        flist_path = Path(opt["datasets"][phase]["which_dataset"]["args"]["data_root"])
+        if not flist_path.exists():
+            flist_exist.append(False)
+        else:
+            flist_exist.append(True)
+        flist_paths.append(flist_path)
+    if False in flist_exist:  # Assume that both of them does not have flist
+        make_flist(opt=opt, flist_paths=flist_paths)
+    
+
 
     ''' set log directory '''
-    
-    experiments_root = os.path.join(opt['path']['base_dir'], '{}_{}'.format(opt['name'], get_timestamp()))
+    experiments_root = os.path.join(opt['path']['base_dir'], f"{opt['name']}_{get_timestamp()}")
     mkdirs(experiments_root)
 
-    ''' save json '''
+    ''' save json config for this experiment in particular '''
     write_json(opt, '{}/config.json'.format(experiments_root))
-
     ''' change folder relative hierarchy '''
     opt['path']['experiments_root'] = experiments_root
     for key, path in opt['path'].items():
@@ -150,7 +174,7 @@ def parse(args):
     if 'debug' in opt['name']:
         opt['train'].update(opt['debug'])
 
-    ''' code backup ''' 
+    ''' code backup in case stuff goes down ''' 
     for name in os.listdir('.'):
         if name in ['config', 'models', 'core', 'slurm', 'data']:
             shutil.copytree(name, os.path.join(opt['path']['code'], name), ignore=shutil.ignore_patterns("*.pyc", "__pycache__"))
@@ -159,6 +183,30 @@ def parse(args):
     return dict_to_nonedict(opt)
 
 
-
-
+def make_flist(opt: dict, flist_paths: tuple[str, str]):
+    """
+    Create separate flists for training and testing purposes
+    Args:
+        opt (dict): the dictionary of parameters for the entire model.
+        flist_paths (str): tuple of all flist paths in the config file. 
+    Returns:
+        None
+    """
+    all_files = []
+    if (test_size := opt.get("train_test_split", 0)) == 0:
+        test_size = 0.3
+    raw_data_path = opt["path"]["root"]
+    for _, _, filenames in os.walk(raw_data_path):
+        all_files = filenames
+    all_files = [os.path.join(raw_data_path, filename) for filename in filenames]
+    all_subsets = train_test_split(all_files, test_size=test_size)
+    
+    # Write train to train flist, test to test flist    
+    for i in range(len(flist_paths)):
+        f = open(flist_paths[i], "w")
+        f.write("\n".join(all_subsets[i]))
+        f.close()
+    return
+         
+            
 
