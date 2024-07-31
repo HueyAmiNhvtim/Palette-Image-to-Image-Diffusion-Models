@@ -198,7 +198,7 @@ def make_flist(opt: dict, flist_paths: tuple[str, str]):
     raw_data_path = opt["path"]["root"]
     for _, _, filenames in os.walk(raw_data_path):
         all_files = filenames
-    all_files = [os.path.join(raw_data_path, filename) for filename in filenames]
+    all_files = [os.path.join(raw_data_path, filename) for filename in all_files]
     all_subsets = train_test_split(all_files, test_size=test_size)
     
     # Write train to train flist, test to test flist    
