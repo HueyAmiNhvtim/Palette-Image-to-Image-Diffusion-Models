@@ -9,7 +9,7 @@ from types  import FunctionType
 from sklearn.model_selection import train_test_split
 import shutil
 
-
+    
 def init_obj(opt, logger, *args, default_file_name='default file', given_module=None, init_type='Network', **modify_kwargs):
     """
     Finds a function handle with the name given as 'name' in config,
@@ -194,7 +194,7 @@ def make_flist(opt: dict, flist_paths: tuple[str, str]):
     """
     all_files = []
     if (test_size := opt.get("train_test_split", 0)) == 0:
-        test_size = 0.3
+        test_size = 0.3  # Set default values if the config file doesn't have the field.
     raw_data_path = opt["path"]["root"]
     for _, _, filenames in os.walk(raw_data_path):
         all_files = filenames
