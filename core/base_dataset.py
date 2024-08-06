@@ -13,6 +13,14 @@ def is_image_file(filename):
     return any(filename.endswith(extension) for extension in IMG_EXTENSIONS)
 
 def make_dataset(dir):
+    """Make a list of relative paths out of dir
+
+    Args:
+        dir (str): can be either a string or a directory of images
+
+    Returns:
+        list[str]: a list of relative paths to the images 
+    """
     if os.path.isfile(dir):
         images = [i for i in np.genfromtxt(dir, dtype=str, encoding='utf-8')]
     else:
@@ -23,6 +31,7 @@ def make_dataset(dir):
                 if is_image_file(fname):
                     path = os.path.join(root, fname)
                     images.append(path)
+
 
     return images
 

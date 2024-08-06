@@ -135,7 +135,9 @@ def brush_stroke_mask(img_shape,
     The method of generating free-form mask is in the following paper:
     Free-Form Image Inpainting with Gated Convolution.
 
+
     When you set the config of this type of mask. You may note the usage of
+
     `np.random.randint` and the range of `np.random.randint` is [left, right).
 
     We prefer to use `uint8` as the data type of masks, which may be different

@@ -1,5 +1,5 @@
 {
-    "name": "inpainting_celebahq", 
+    "name": "inpainting_stamps", 
     "gpu_ids": [0], 
     "seed" : -1, 
     "finetune_norm": false, 
@@ -11,7 +11,7 @@
         "results": "results",
         "checkpoint": "checkpoint",
         "resume_state": "chk_points/200",
-        "root": "datasets/celebahq/imgs"
+        "root": "datasets/stamps/imgs"
     },
     "datasets": { 
         "train": { 
@@ -105,7 +105,6 @@
                         "res_blocks": 2,
                         "dropout": 0.2,
                         "image_size": 256
-                        
                     },
                     "beta_schedule": {
                         "train": {
