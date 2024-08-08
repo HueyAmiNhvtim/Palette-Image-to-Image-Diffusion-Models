@@ -180,8 +180,13 @@ class InpaintStampDataset(data.Dataset):
         og_doc = self.loader(doc_path)
         img_data = og_doc.crop(box=img_coords)  # We also have to grab stuff from the original template inspiration too!
         
-        img = self.tfs(img_data)  # Actual cropped image, now time to get da mask
-        target = self.tfs(target_data)  # Note, this only works when the transformations don't contain random augmentations...
+        img = v2.PILToTensor(img_data)
+        target = v2.PILToTensor(img_data)
+        both_img_target = torch.concat((img.unsqueeze(0), target.unsqueeze(0)), 0)
+        both_img_target = self.tfs(both_img_target)
+        # Now the transformations with probabilistic augmentations will apply the same on both images
+        img = both_img_target[0]
+        target = both_img_target[1]
         
         mask = self.get_mask()
         cond_image = img*(1. - mask) + mask*torch.randn_like(img)
@@ -209,7 +214,7 @@ class InpaintStampDataset(data.Dataset):
         Returns:
             Mask tensor of the image
         """
-        if bbox_coord is None:
+        if bbox_coord is None:  # Ignore PyLance warning here. This is spurious.
             if self.mask_mode == 'bbox':
                 mask = bbox2mask(self.image_size, random_bbox())
             elif self.mask_mode == 'center':
@@ -249,10 +254,10 @@ class UncroppingDataset(data.Dataset):
             self.imgs = imgs[:int(data_len)]
         else:
             self.imgs = imgs
-        self.tfs = transforms.Compose([
-                transforms.Resize((image_size[0], image_size[1])),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5,0.5, 0.5])
+        self.tfs = v2.Compose([
+                v2.Resize((image_size[0], image_size[1])),
+                v2.ToTensor(),
+                v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5,0.5, 0.5])
         ])
         self.loader = loader
         self.mask_config = mask_config
