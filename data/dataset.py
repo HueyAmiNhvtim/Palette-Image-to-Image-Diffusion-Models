@@ -119,9 +119,7 @@ class InpaintDataset(data.Dataset):
 
 
 class InpaintStampDataset(data.Dataset):
-    # INCOMPLETE.
-    # WE HAVE TO MAKE SURE TO TURN ALL PARTS WITH ALPHA 0 to 255 for black.
-    # No, that can be taken care of by data generation part. Yeah, that part is done.
+    # FIRST VERSION DONE
     def __init__(self, data_root: str, img_type="png", mask_config={}, data_len=-1, image_size=[256, 256], loader=pil_loader):
         """Initalizing Dataset for giving out cropped images of the document to send into the model
         Args:
