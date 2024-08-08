@@ -151,7 +151,6 @@ class InpaintStampDataset(data.Dataset):
             self.csv_data = self.csv_data
         self.tfs = v2.Compose([
                 v2.Resize((image_size[0], image_size[1])),
-                v2.PILToTensor(),  
                 v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5,0.5, 0.5])
         ])
         self.loader = loader
@@ -170,25 +169,35 @@ class InpaintStampDataset(data.Dataset):
         target_path = os.path.join("", f"{target_name}")  # change "" to config.TEMPLATE_PATH when moved to the other project
         # A bit cursed because the target_name already has image type so yeah....
         
-        img_coords = (csv_data["xmin_crop"], csv_data["ymin_crop"], csv_data["xmax_crop"], csv_data["ymax_crop"])
-
+        img_coords = [int(i) for i in (csv_data["xmin_crop"], csv_data["ymin_crop"], csv_data["xmax_crop"], csv_data["ymax_crop"])]
+        # The bounding box for the stamp!
+        bbox_mask = [int(i) for i in (csv_data["xmin"], csv_data["ymin"], csv_data["xmax"], csv_data["ymax"])]
+        
         ret = {}
         # Crop da thing here from the generated document
         target_doc = self.loader(target_path)
-        target_data = target_doc.crop(box=img_coords)
+        target_data = target_doc.crop(box=tuple(img_coords))
         
         og_doc = self.loader(doc_path)
-        img_data = og_doc.crop(box=img_coords)  # We also have to grab stuff from the original template inspiration too!
+        img_data = og_doc.crop(box=tuple(img_coords))  
         
-        img = v2.PILToTensor(img_data)
-        target = v2.PILToTensor(img_data)
+        # Move Bounding box mask coordinate back to origin of top left of cropped image
+        top_crop = np.array([img_coords[0], img_coords[1]])
+        bbox_mask = tuple(np.array(bbox_mask) - np.expand_dims(top_crop, axis=0).repeat(2, axis=0).flatten())
+        
+        img = v2.PILToTensor(img_data)  # because pytorch likes processing tensor for augmentation more.
+        target = v2.PILToTensor(target_data)
+        
         both_img_target = torch.concat((img.unsqueeze(0), target.unsqueeze(0)), 0)
         both_img_target = self.tfs(both_img_target)
+        # uhhhhhhhh....how do we augment bounding box again.......
+        bbox_mask..... #[INCOMPLETE]
         # Now the transformations with probabilistic augmentations will apply the same on both images
         img = both_img_target[0]
         target = both_img_target[1]
         
-        mask = self.get_mask()
+        # bbox_coord, remember to offset from the crop....
+        mask = self.get_mask(bbox_coord=bbox_mask)
         cond_image = img*(1. - mask) + mask*torch.randn_like(img)
         mask_img = img*(1. - mask) + mask
 
@@ -234,12 +243,17 @@ class InpaintStampDataset(data.Dataset):
                 raise NotImplementedError(
                     f'Mask mode {self.mask_mode} has not been implemented.')
         else:
+            bbox_mask_input = list(bbox_coord)
+            # Turn bbox_mask from xyxy to xywh
+            bbox_mask_input[2] = bbox_mask_input[2] - bbox_mask_input[0]
+            bbox_mask_input[3] = bbox_mask_input[3] - bbox_mask_input[1]
+            # Create custom mask at the stamp location
             if self.mask_mode == 'hybrid_custom_crop':
-                # [INCOMPLETE] Use bbox2mask with your bounding box coordinate here! and do same thing as hybrid_mode
-                pass
+                regular_mask = bbox2mask(self.image_size, tuple(bbox_mask_input))
+                irregular_mask = brush_stroke_mask(self.image_size, )
+                mask = regular_mask | irregular_mask
             elif self.mask_mode == 'custom_crop':
-                # [INCOMPLETE] Use bbox2mask with your bounding box coordinate here!            
-                pass
+                mask = bbox2mask(self.image_size, tuple(bbox_mask_input))
             else:
                 raise NotImplementedError(
                     f'Mask mode {self.mask_mode} has not been implemented.')
