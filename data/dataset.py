@@ -1,5 +1,8 @@
 import torch.utils.data as data
 from torchvision.transforms import v2
+import albumentations as album
+from albumentations.pytorch import ToTensorV2
+
 from PIL import Image
 import os
 import torch
@@ -66,7 +69,7 @@ class InpaintDataset(data.Dataset):
             self.imgs = imgs
         self.tfs = v2.Compose([
                 v2.Resize((image_size[0], image_size[1])),
-                v2.ToTensor(),
+                v2.PILToTensor(),
                 v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5,0.5, 0.5])
         ])
         self.loader = loader
@@ -149,10 +152,12 @@ class InpaintStampDataset(data.Dataset):
             self.csv_data = self.csv_data[:int(data_len)]
         else:
             self.csv_data = self.csv_data
-        self.tfs = v2.Compose([
-                v2.Resize((image_size[0], image_size[1])),
-                v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5,0.5, 0.5])
-        ])
+        self.tfs = album.Compose([
+                ToTensorV2(),
+                album.LongestMaxSize([image_size[0], image_size[1]]),
+                album.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))],
+            additional_targets={"img": "image", "target": "image"},
+            bbox_params=album.BboxParams(format="pascal_voc", label_fields=["class_labels"]))
         self.loader = loader
         self.mask_config = mask_config
         self.mask_mode = self.mask_config['mask_mode']
@@ -166,7 +171,7 @@ class InpaintStampDataset(data.Dataset):
         target_name = csv_data["original"]
         
         doc_path = os.path.join(self.data_root, f"{doc_id}.{self.img_type}")
-        target_path = os.path.join("", f"{target_name}")  # change "" to config.TEMPLATE_PATH when moved to the other project
+        target_path = os.path.join("", f"{target_name}")  # [WARNING] change "" to config.TEMPLATE_PATH when moved to the other project
         # A bit cursed because the target_name already has image type so yeah....
         
         img_coords = [int(i) for i in (csv_data["xmin_crop"], csv_data["ymin_crop"], csv_data["xmax_crop"], csv_data["ymax_crop"])]
@@ -185,19 +190,16 @@ class InpaintStampDataset(data.Dataset):
         top_crop = np.array([img_coords[0], img_coords[1]])
         bbox_mask = tuple(np.array(bbox_mask) - np.expand_dims(top_crop, axis=0).repeat(2, axis=0).flatten())
         
-        img = v2.PILToTensor(img_data)  # because pytorch likes processing tensor for augmentation more.
-        target = v2.PILToTensor(target_data)
-        
-        both_img_target = torch.concat((img.unsqueeze(0), target.unsqueeze(0)), 0)
-        both_img_target = self.tfs(both_img_target)
+        # Albumentations only work with NUMPY ARRAY if your images are PIL
+        transformed = self.tfs(img=np.array(img_data), target=np.array(target_data), bboxes=[bbox_mask])
         # uhhhhhhhh....how do we augment bounding box again.......
-        bbox_mask..... #[INCOMPLETE]
+        bbox_mask_tfs = transformed["bboxes"][0]  # TUPLE OF VAL IN PASCAL FORMAT
         # Now the transformations with probabilistic augmentations will apply the same on both images
-        img = both_img_target[0]
-        target = both_img_target[1]
+        img = transformed["img"]
+        target = transformed["target"]
         
         # bbox_coord, remember to offset from the crop....
-        mask = self.get_mask(bbox_coord=bbox_mask)
+        mask = self.get_mask(bbox_coord=bbox_mask_tfs)  # I dunno the result bbox_mask_tfs....
         cond_image = img*(1. - mask) + mask*torch.randn_like(img)
         mask_img = img*(1. - mask) + mask
 
@@ -243,17 +245,21 @@ class InpaintStampDataset(data.Dataset):
                 raise NotImplementedError(
                     f'Mask mode {self.mask_mode} has not been implemented.')
         else:
-            bbox_mask_input = list(bbox_coord)
+            bbox_mask_input = np.asarray(bbox_coord)
             # Turn bbox_mask from xyxy to xywh
             bbox_mask_input[2] = bbox_mask_input[2] - bbox_mask_input[0]
             bbox_mask_input[3] = bbox_mask_input[3] - bbox_mask_input[1]
+
+            # Round down top left and round up width height brah, and turn everything into an int 
+            bbox_mask_input = np.concat([np.floor(bbox_mask_input[0:2]), np.ceil(bbox_mask_input[2:4])]).astype(np.int64)
+            
             # Create custom mask at the stamp location
             if self.mask_mode == 'hybrid_custom_crop':
-                regular_mask = bbox2mask(self.image_size, tuple(bbox_mask_input))
+                regular_mask = bbox2mask(self.image_size, tuple(bbox_mask_input.tolist()))
                 irregular_mask = brush_stroke_mask(self.image_size, )
                 mask = regular_mask | irregular_mask
             elif self.mask_mode == 'custom_crop':
-                mask = bbox2mask(self.image_size, tuple(bbox_mask_input))
+                mask = bbox2mask(self.image_size, tuple(bbox_mask_input.tolist()))  
             else:
                 raise NotImplementedError(
                     f'Mask mode {self.mask_mode} has not been implemented.')
@@ -270,7 +276,7 @@ class UncroppingDataset(data.Dataset):
             self.imgs = imgs
         self.tfs = v2.Compose([
                 v2.Resize((image_size[0], image_size[1])),
-                v2.ToTensor(),
+                v2.PILToTensor(),
                 v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5,0.5, 0.5])
         ])
         self.loader = loader
@@ -322,10 +328,10 @@ class ColorizationDataset(data.Dataset):
             self.flist = flist[:int(data_len)]
         else:
             self.flist = flist
-        self.tfs = transforms.Compose([
-                transforms.Resize((image_size[0], image_size[1])),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5,0.5, 0.5])
+        self.tfs = v2.Compose([
+                v2.Resize((image_size[0], image_size[1])),
+                v2.ToTensor(),
+                v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5,0.5, 0.5])
         ])
         self.loader = loader
         self.image_size = image_size
