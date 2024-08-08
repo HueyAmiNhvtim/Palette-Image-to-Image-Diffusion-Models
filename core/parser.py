@@ -185,7 +185,9 @@ def parse(args):
 
 def make_flist(opt: dict, flist_paths: tuple[str, str]):
     """
-    Create separate flists for training and testing purposes
+    Create separate flists for training and testing purposes. Only for datasets containing 
+    all of their data into a single folder.
+    
     Args:
         opt (dict): the dictionary of parameters for the entire model.
         flist_paths (str): tuple of all flist paths in the config file. 

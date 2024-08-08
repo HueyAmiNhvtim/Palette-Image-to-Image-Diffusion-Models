@@ -11,18 +11,18 @@
         "results": "results",
         "checkpoint": "checkpoint",
         "resume_state": "chk_points/200",
-        "root": "datasets/stamps/imgs"
+        "root": "datasets/stamps/"
     },
     "datasets": { 
         "train": { 
             "which_dataset": {  
                 "name": ["data.dataset", "InpaintDataset"], 
                 "args":{ 
-                    "data_root": "datasets/celebahq/flist/train.flist",
+                    "data_root": "datasets/stamps/train/imgs", 
                     "data_len": -1,
                     "mask_config":
                     {
-                        "mask_mode": "hybrid"
+                        "mask_mode": "hybrid_custom_crop"
                     }
                 } 
             },
@@ -48,11 +48,12 @@
             "which_dataset": {
                 "name": "InpaintDataset", 
                 "args":{
-                    "data_root": "datasets/celebahq/flist/test.flist",
+                    "data_root": "datasets/stamps/test/imgs",
                     "mask_config": {
-                        "mask_mode": "center"
+                        "mask_mode": "custom_crop"
                     }
                 }
+
             },
             "dataloader":{
                 "args":{
