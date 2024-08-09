@@ -3,7 +3,8 @@
     "gpu_ids": [0], 
     "seed" : -1, 
     "finetune_norm": false, 
-    "train_test_split": 0.2,    
+    "train_test_split": 0.2,   
+    "flist_make": false, 
     "path": { 
         "base_dir": "experiments", 
         "code": "code", 

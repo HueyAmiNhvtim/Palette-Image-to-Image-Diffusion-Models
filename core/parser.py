@@ -143,17 +143,19 @@ def parse(args):
         opt['name'] = '{}_{}'.format(opt['phase'], opt['name'])
     
     # Check if the flist of the appropriate phase exists. If not, then create a new one.
-    flist_exist = []
-    flist_paths = []
-    for phase in opt["datasets"]:  # Only works with train and test
-        flist_path = Path(opt["datasets"][phase]["which_dataset"]["args"]["data_root"])
-        if not flist_path.exists():
-            flist_exist.append(False)
-        else:
-            flist_exist.append(True)
-        flist_paths.append(flist_path)
-    if False in flist_exist:  # Assume that both of them does not have flist
-        make_flist(opt=opt, flist_paths=flist_paths)
+    if "flist_make" in opt:
+        if opt["flist_make"]:
+            flist_exist = []
+            flist_paths = []
+            for phase in opt["datasets"]:  # Only works with train and test
+                flist_path = Path(opt["datasets"][phase]["which_dataset"]["args"]["data_root"])
+                if not flist_path.exists():
+                    flist_exist.append(False)
+                else:
+                    flist_exist.append(True)
+                flist_paths.append(flist_path)
+            if False in flist_exist:  # Assume that both of them does not have flist
+                make_flist(opt=opt, flist_paths=flist_paths)
     
 
 

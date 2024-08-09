@@ -135,7 +135,7 @@ class InpaintStampDataset(data.Dataset):
         self.csv_data = []
         # Get the parent folder path
         parent_path, _ = os.path.split(data_root)
-        annotating_csv_path = os.path.join(parent_path, "data_annotating_file_coco.csv")
+        annotating_csv_path = os.path.join(parent_path, "data_annotating_file_pascal.csv")
         
         with open(annotating_csv_path, mode="r") as f:
             csv_reader = csv.DictReader(f=f)
@@ -143,7 +143,7 @@ class InpaintStampDataset(data.Dataset):
                 self.csv_data.append(line)
         
         
-        # We're gonna use coco data_annotating_file because that way, we don't have to convert other bbox_coordinate 
+        # We're gonna use data_annotating_file because that way, we don't have to convert other bbox_coordinate 
         # system back into COCO format for PIL's crop
         
         if data_len > 0:
@@ -189,8 +189,8 @@ class InpaintStampDataset(data.Dataset):
         bbox_mask = tuple(np.array(bbox_mask) - np.expand_dims(top_crop, axis=0).repeat(2, axis=0).flatten())
         
         # Albumentations only work with NUMPY ARRAY if your images are PIL
-        transformed = self.tfs(img=np.array(img_data), target=np.array(target_data), bboxes=[bbox_mask])
-        # uhhhhhhhh....how do we augment bounding box again.......
+        transformed = self.tfs(img=np.array(img_data), target=np.array(target_data), bboxes=[bbox_mask], class_labels=["stamp"])
+
         bbox_mask_tfs = transformed["bboxes"][0]  # TUPLE OF VAL IN PASCAL FORMAT
         # Now the transformations with probabilistic augmentations will apply the same on both images
         img = transformed["img"]
@@ -348,5 +348,3 @@ class ColorizationDataset(data.Dataset):
 
     def __len__(self):
         return len(self.flist)
-
-
